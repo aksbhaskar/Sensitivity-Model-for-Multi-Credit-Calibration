@@ -1,5 +1,10 @@
 # Sensitivity Model for Multi-Credit Calibration
 
+[![arXiv](https://img.shields.io/badge/arXiv-2608.10321-b31b1b.svg)](https://arxiv.org/abs/2608.10321)
+[![CI](https://github.com/aksbhaskar/sensitivity-model-for-multi-credit-calibration/actions/workflows/ci.yml/badge.svg)](https://github.com/aksbhaskar/sensitivity-model-for-multi-credit-calibration/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 **Firm-specific sensitivities to the common jump factor in the elastically stopped Lévy multi-credit model.**
 
 This project extends Baker & Capponi,

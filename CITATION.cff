@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below, together with the original paper."
+title: "Sensitivity Model for Multi-Credit Calibration"
+abstract: >-
+  Firm-specific loadings on the common compound Poisson jump factor in the
+  elastically stopped Lévy multi-credit model of Baker and Capponi. Loadings are
+  estimated under the historical measure and held fixed, and the risk-neutral
+  parameters are calibrated to CDX index tranches.
+authors:
+  - family-names: Bhaskar
+    given-names: Akshat
+  - family-names: Harish
+    given-names: Ishaan
+  - family-names: Arora
+    given-names: Saksham
+repository-code: "https://github.com/aksbhaskar/sensitivity-model-for-multi-credit-calibration"
+license: MIT
+keywords:
+  - credit risk
+  - Lévy processes
+  - Wiener-Hopf Monte Carlo
+  - CDO tranche pricing
+  - CDX
+  - calibration
+references:
+  - type: article
+    title: "Multi-Credit Calibration via Elastically Stopped Lévy Processes"
+    authors:
+      - family-names: Baker
+        given-names: Graeme
+      - family-names: Capponi
+        given-names: Agostino
+    year: 2026
+    identifiers:
+      - type: other
+        value: "arXiv:2608.10321"
+    url: "https://arxiv.org/abs/2608.10321"

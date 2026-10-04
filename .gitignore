@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data (never commit market data)
+data/raw/
+data/processed/
+*.parquet
+*.h5
+*.hdf5
+*.csv
+!tests/fixtures/*.csv
+
+# Results
+results/
+figures/*.png
+!figures/.gitkeep
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp

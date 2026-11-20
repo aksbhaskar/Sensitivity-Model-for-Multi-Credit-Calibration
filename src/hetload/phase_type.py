@@ -40,12 +40,12 @@ class PhaseType:
         object.__setattr__(self, "T", T)
 
     @classmethod
-    def exponential(cls, rate: float) -> "PhaseType":
+    def exponential(cls, rate: float) -> PhaseType:
         """Exp(rate), the one-phase case."""
         return cls(np.array([1.0]), np.array([[-rate]]))
 
     @classmethod
-    def hyperexponential(cls, weights, rates) -> "PhaseType":
+    def hyperexponential(cls, weights, rates) -> PhaseType:
         """Mixture sum_k weights[k] Exp(rates[k])."""
         return cls(np.asarray(weights, dtype=float), -np.diag(np.asarray(rates, dtype=float)))
 
@@ -64,7 +64,7 @@ class PhaseType:
         n = self.T.shape[0]
         return complex(self.alpha @ np.linalg.solve(theta * np.eye(n) - self.T, self.exit_rates))
 
-    def scale(self, c: float) -> "PhaseType":
+    def scale(self, c: float) -> PhaseType:
         """Law of c Z, which is PH(alpha, T / c)."""
         if c <= 0:
             raise ValueError("scale factor must be positive")

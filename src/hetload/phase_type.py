@@ -56,13 +56,27 @@ class PhaseType:
 
     def mean(self) -> float:
         """E[Z] = -alpha T^{-1} 1."""
+        rates = -np.diag(self.T)
+        if np.array_equal(self.T, -np.diag(rates)):
+            return float(np.sum(self.alpha / rates))
         ones = np.ones(self.T.shape[0])
         return float(-self.alpha @ np.linalg.solve(self.T, ones))
 
-    def laplace(self, theta: complex) -> complex:
+    def laplace(self, theta: complex | np.ndarray) -> complex | np.ndarray:
         """Laplace transform E[exp(-theta Z)] = alpha (theta I - T)^{-1} t."""
         n = self.T.shape[0]
-        return complex(self.alpha @ np.linalg.solve(theta * np.eye(n) - self.T, self.exit_rates))
+        theta = np.asarray(theta, dtype=complex)
+        rates = -np.diag(self.T)
+        if np.array_equal(self.T, -np.diag(rates)):
+            shifted = theta[..., None] + rates
+            if np.any(shifted == 0):
+                raise np.linalg.LinAlgError("Singular matrix")
+            result = np.sum(self.alpha * rates / shifted, axis=-1)
+        else:
+            matrices = theta[..., None, None] * np.eye(n) - self.T
+            rhs = np.broadcast_to(self.exit_rates, theta.shape + (n,))[..., None]
+            result = np.linalg.solve(matrices, rhs)[..., 0] @ self.alpha
+        return complex(result) if theta.ndim == 0 else result
 
     def scale(self, c: float) -> PhaseType:
         """Law of c Z, which is PH(alpha, T / c)."""
@@ -75,20 +89,28 @@ class PhaseType:
         rng = np.random.default_rng() if rng is None else rng
         n = self.T.shape[0]
         rates = -np.diag(self.T)
+        if n == 1:
+            return rng.exponential(1.0 / rates[0], size=size)
+        if np.array_equal(self.T, -np.diag(rates)):
+            state = rng.choice(n, size=size, p=self.alpha)
+            return rng.exponential(1.0 / rates[state])
         # Row i: probabilities of moving to each transient state, then absorption.
         jump = np.zeros((n, n + 1))
         jump[:, :n] = self.T / rates[:, None]
         np.fill_diagonal(jump[:, :n], 0.0)
         jump[:, n] = self.exit_rates / rates
 
-        out = np.empty(size)
-        for k in range(size):
-            state = rng.choice(n, p=self.alpha)
-            total = 0.0
-            while state < n:
-                total += rng.exponential(1.0 / rates[state])
-                state = rng.choice(n + 1, p=jump[state])
-            out[k] = total
+        cumulative = np.cumsum(jump, axis=1)
+        cumulative[:, -1] = 1.0
+        out = np.zeros(size)
+        state = rng.choice(n, size=size, p=self.alpha)
+        active = np.arange(size)
+        while active.size:
+            current = state[active]
+            out[active] += rng.exponential(1.0 / rates[current])
+            uniforms = rng.random(active.size)
+            state[active] = np.sum(uniforms[:, None] >= cumulative[current], axis=1)
+            active = active[state[active] < n]
         return out
 
 

@@ -125,3 +125,17 @@ def test_normalise_loadings():
     assert omega.mean() == pytest.approx(1.0)
     with pytest.raises(ValueError):
         normalise_loadings([1.0, -1.0])
+
+
+@pytest.mark.parametrize(
+    "law",
+    [
+        PhaseType.hyperexponential([0.3, 0.7], [2.0, 5.0]),
+        PhaseType(np.array([1.0, 0.0]), np.array([[-2.0, 2.0], [0.0, -5.0]])),
+    ],
+)
+def test_laplace_raises_at_pole(law):
+    with pytest.raises(np.linalg.LinAlgError):
+        law.laplace(-2.0)
+    with pytest.raises(np.linalg.LinAlgError):
+        law.laplace(np.array([1.0, -2.0]))

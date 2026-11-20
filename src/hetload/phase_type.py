@@ -68,7 +68,10 @@ class PhaseType:
         theta = np.asarray(theta, dtype=complex)
         rates = -np.diag(self.T)
         if np.array_equal(self.T, -np.diag(rates)):
-            result = np.sum(self.alpha * rates / (theta[..., None] + rates), axis=-1)
+            shifted = theta[..., None] + rates
+            if np.any(shifted == 0):
+                raise np.linalg.LinAlgError("Singular matrix")
+            result = np.sum(self.alpha * rates / shifted, axis=-1)
         else:
             matrices = theta[..., None, None] * np.eye(n) - self.T
             rhs = np.broadcast_to(self.exit_rates, theta.shape + (n,))[..., None]

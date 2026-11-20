@@ -28,6 +28,81 @@ def test_sample_mean(coxian):
     assert draws.mean() == pytest.approx(coxian.mean(), rel=0.03)
 
 
+@pytest.fixture(params=["exponential", "diagonal", "coxian", "cyclic"])
+def law(request, coxian):
+    if request.param == "exponential":
+        return PhaseType.exponential(2.0)
+    if request.param == "diagonal":
+        return PhaseType.hyperexponential([0.4, 0.6], [1.0, 4.0])
+    if request.param == "cyclic":
+        return PhaseType(np.array([0.4, 0.6]), np.array([[-3.0, 2.0], [1.0, -2.0]]))
+    return coxian
+
+
+def test_sample_moments(law):
+    first = np.linalg.solve(-law.T, np.ones(law.T.shape[0]))
+    mean = law.alpha @ first
+    variance = 2 * law.alpha @ np.linalg.solve(-law.T, first) - mean**2
+    draws = law.sample(200_000, np.random.default_rng(42))
+    assert draws.mean() == pytest.approx(mean, rel=0.015)
+    assert draws.var() == pytest.approx(variance, rel=0.03)
+    assert law.mean() == pytest.approx(mean)
+    assert isinstance(law.mean(), float)
+
+
+@pytest.mark.parametrize("shape", [(), (6,), (2, 3), (0,), (2, 0)])
+def test_batched_laplace_matches_dense_solve(law, shape):
+    theta = np.linspace(0.0, 3.0, int(np.prod(shape))).reshape(shape) + 0.3j
+    expected = np.array(
+        [
+            law.alpha @ np.linalg.solve(t * np.eye(law.T.shape[0]) - law.T, law.exit_rates)
+            for t in theta.flat
+        ],
+        dtype=complex,
+    ).reshape(shape)
+    actual = law.laplace(theta)
+    np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=0)
+    if not shape:
+        assert isinstance(actual, complex)
+    else:
+        assert actual.shape == shape
+        assert np.iscomplexobj(actual)
+
+
+def test_scalar_laplace_type(law):
+    assert isinstance(law.laplace(1.0), complex)
+
+
+def test_empty_sample(law):
+    assert law.sample(0, np.random.default_rng(42)).shape == (0,)
+
+
+def test_negative_sample_size(law):
+    with pytest.raises(ValueError):
+        law.sample(-1, np.random.default_rng(42))
+
+
+def test_laplace_singular_matrix(coxian):
+    with pytest.raises(np.linalg.LinAlgError):
+        coxian.laplace(np.array([0.0, -3.0]))
+
+
+def test_mutated_arrays_are_used():
+    law = PhaseType.hyperexponential([0.4, 0.6], [1.0, 4.0])
+    law.sample(10, np.random.default_rng(42))
+    law.mean()
+    law.laplace(1.0)
+    law.T[0, 1] = 0.5
+    law.alpha[:] = [1.0, 0.0]
+    reference = PhaseType(law.alpha.copy(), law.T.copy())
+    assert law.mean() == reference.mean()
+    assert law.laplace(1.0) == reference.laplace(1.0)
+    np.testing.assert_array_equal(
+        law.sample(100, np.random.default_rng(42)),
+        reference.sample(100, np.random.default_rng(42)),
+    )
+
+
 def test_marginal_law_homogeneous_matches_eq11():
     lam_j, eta, lam_c, gamma = 0.8, 2.0, 0.15, 3.5
     total, law = marginal_jump_law(lam_j, eta, lam_c, gamma)
